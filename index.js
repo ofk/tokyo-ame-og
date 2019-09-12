@@ -40,14 +40,25 @@ const indexPage = (url) => fetch(`https://tokyo-ame.jwa.or.jp/scripts/mesh_index
       });
 
 const imagePage = (url) => Promise.all([
-  loadImage('https://tokyo-ame.jwa.or.jp/map/map100.jpg'),
+  loadImage('https://tokyo-ame.jwa.or.jp/map/map150.jpg'),
   loadImage(`https://tokyo-ame.jwa.or.jp/mesh/100/${url.searchParams.get('t')}.gif`),
-  loadImage('https://tokyo-ame.jwa.or.jp/map/msk100.png'),
+  loadImage('https://tokyo-ame.jwa.or.jp/map/msk150.png'),
 ]).then((images) => {
-  const canvas = createCanvas(images[0].width, images[0].height);
+  const x = parseFloat(url.searchParams.get('x')) || 0.6;
+  const y = parseFloat(url.searchParams.get('y')) || 0.5;
+  const canvas = createCanvas(1200, 630);
   const ctx = canvas.getContext('2d');
+  const widthRatio = canvas.width / images[0].width;
+  const heightRatio = canvas.height / images[0].height;
   images.forEach((image) => {
-    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      image,
+      image.width * (x - widthRatio / 2),
+      image.height * (y - heightRatio / 2),
+      image.width * widthRatio,
+      image.height * heightRatio,
+      0, 0, canvas.width, canvas.height
+    );
   });
   return canvas.toBuffer();
 });
@@ -64,7 +75,7 @@ module.exports = (req, res) => {
     case '/image':
       if (url.searchParams.get('t')) {
         imagePage(url).then((data) => {
-          res.send(data);
+          res.end(data);
         });
       } else {
         res.status(500).send('Internal Server Error');
