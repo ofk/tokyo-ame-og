@@ -1,0 +1,11 @@
+{
+  "name": "tokyo-ame-og",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "now dev"
+  },
+  "devDependencies": {
+    "now": "^16.2.0"
+  }
+}
