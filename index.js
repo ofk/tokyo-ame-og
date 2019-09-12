@@ -1,5 +1,6 @@
 const { URL } = require('url');
 const fetch = require('node-fetch');
+const { createCanvas, loadImage } = require('canvas');
 
 const h = (str) => `${str}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -38,6 +39,19 @@ const indexPage = (url) => fetch(`https://tokyo-ame.jwa.or.jp/scripts/mesh_index
         });
       });
 
+const imagePage = (url) => Promise.all([
+  loadImage('https://tokyo-ame.jwa.or.jp/map/map100.jpg'),
+  loadImage(`https://tokyo-ame.jwa.or.jp/mesh/100/${url.searchParams.get('t')}.gif`),
+  loadImage('https://tokyo-ame.jwa.or.jp/map/msk100.png'),
+]).then((images) => {
+  const canvas = createCanvas(images[0].width, images[0].height);
+  const ctx = canvas.getContext('2d');
+  images.forEach((image) => {
+    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
+  });
+  return canvas.toBuffer();
+});
+
 module.exports = (req, res) => {
   const url = new URL(`${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}${req.url}`);
 
@@ -46,6 +60,15 @@ module.exports = (req, res) => {
       indexPage(url).then((data) => {
         res.send(data);
       });
+      break;
+    case '/image':
+      if (url.searchParams.get('t')) {
+        imagePage(url).then((data) => {
+          res.send(data);
+        });
+      } else {
+        res.status(500).send('Internal Server Error');
+      }
       break;
     default:
       res.status(404).send('Not Found');
