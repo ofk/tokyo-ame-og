@@ -106,9 +106,20 @@ module.exports = (req, res) => {
 
   switch (url.pathname) {
     case '/':
+      if (process.env.NODE_ENV !== 'development' && !/Slackbot-LinkExpanding/.test(req.headers['user-agent'])) {
+        res.writeHead(302, 'Redirect', { Location: 'https://tokyo-ame.jwa.or.jp/' });
+        res.end();
+        return;
+      }
       indexPage(url).then((data) => {
         res.send(data);
       });
+      break;
+    case '/now':
+      const params = new URLSearchParams(url.searchParams);
+      params.append('_', Date.now());
+      res.writeHead(302, 'Redirect', { Location: `/?${params}` });
+      res.end();
       break;
     case '/image':
       if (url.searchParams.get('t')) {
