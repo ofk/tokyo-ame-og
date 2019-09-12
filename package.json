@@ -5,6 +5,9 @@
   "scripts": {
     "start": "now dev"
   },
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  },
   "devDependencies": {
     "now": "^16.2.0"
   }
