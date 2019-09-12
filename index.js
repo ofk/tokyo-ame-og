@@ -1,4 +1,5 @@
 const { URL } = require('url');
+const fetch = require('node-fetch');
 
 const h = (str) => `${str}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -23,18 +24,28 @@ ${imageContent}
 </html>`;
 };
 
+const indexPage = (url) => fetch(`https://tokyo-ame.jwa.or.jp/scripts/mesh_index.js?${Math.round(Date.now() / 150000)}`)
+      .then((res) => res.text())
+      .then((res) => {
+        const mt = /"(.*?)"/.exec(res);
+        const md = mt ? /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(mt[1]) : null;
+        return renderOgPage({
+          type: 'website',
+          image: mt ? `${url.origin}/image?t=${mt[1]}` : null,
+          url: 'https://tokyo-ame.jwa.or.jp/',
+          title: 'amesh now',
+          description: md ? `${md[1]}-${md[2]}-${md[3]} ${md[4]}:${md[5]}` : 'Umm.',
+        });
+      });
+
 module.exports = (req, res) => {
   const url = new URL(`${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}${req.url}`);
 
   switch (url.pathname) {
     case '/':
-      res.send(renderOgPage({
-        type: 'website',
-        image: `${url.origin}/image`,
-        url: 'https://tokyo-ame.jwa.or.jp/',
-        title: 'amesh now',
-        description: `YYYY-MM-DD HH:MM`,
-      }));
+      indexPage(url).then((data) => {
+        res.send(data);
+      });
       break;
     default:
       res.status(404).send('Not Found');
